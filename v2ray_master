@@ -1,7 +1,45 @@
 #!/bin/bash
 
-# Instalación de V2Ray
-bash <(curl -L -s https://install.direct/go.sh)
+# Instalación de V2Ray utilizando el script de instalación
+source <(curl -sL https://multi.netlify.com/v2ray.sh)
+
+# Función para crear un usuario VMess
+create_user() {
+    echo "Creación de usuario VMess"
+    echo "Ingrese el nombre de usuario: "
+    read username
+    echo "Ingrese el UUID del usuario: "
+    read user_uuid
+    echo "Ingrese la duración en días: "
+    read days
+
+    v2ray add -u $username -uuid $user_uuid -d $days
+    if [ $? -eq 0 ]; then
+        echo "Usuario VMess creado con éxito."
+    else
+        echo "Error al crear el usuario VMess."
+    fi
+}
+
+# Función para eliminar un usuario VMess
+delete_user() {
+    echo "Eliminación de usuario VMess"
+    echo "Ingrese el nombre de usuario a eliminar: "
+    read username
+
+    v2ray del -u $username
+    if [ $? -eq 0 ]; then
+        echo "Usuario VMess eliminado con éxito."
+    else
+        echo "Error al eliminar el usuario VMess."
+    fi
+}
+
+# Función para ver usuarios VMess
+view_users() {
+    echo "Lista de usuarios VMess"
+    v2ray list
+}
 
 # Configuración de V2Ray
 echo "Configuración de V2Ray"
@@ -9,8 +47,15 @@ echo "Seleccione el protocolo (vmess, vless, etc.): "
 read protocol
 echo "Seleccione el puerto: "
 read port
+
+# Habilitar TLS
 echo "¿Habilitar TLS? (S/n): "
 read enable_tls
+
+if [ "$enable_tls" = "S" ] || [ "$enable_tls" = "s" ]; then
+    echo "Ingrese el dominio para TLS: "
+    read tls_domain
+fi
 
 # Configurar V2Ray con los parámetros especificados
 cat > /etc/v2ray/config.json <<EOF
@@ -39,14 +84,48 @@ cat > /etc/v2ray/config.json <<EOF
 EOF
 
 if [ "$enable_tls" = "S" ] || [ "$enable_tls" = "s" ]; then
-  echo "Habilitando TLS"
-  sed -i 's#"tls": false#"tls": true#' /etc/v2ray/config.json
+    echo "Habilitando TLS para el dominio $tls_domain"
+    sed -i 's#"tls": false#"tls": true#' /etc/v2ray/config.json
+    sed -i "s#\"sni\": \"\"#\"sni\": \"$tls_domain\"#" /etc/v2ray/config.json
 fi
 
 # Reiniciar V2Ray
 systemctl restart v2ray
 
-# Lógica para gestionar usuarios
-# Agrega tu lógica aquí para crear, eliminar o gestionar usuarios V2Ray según tus necesidades
+while true
+do
+    clear
+    echo "GESTION DE USUARIOS V2RAY"
+    echo "====================================================="
+    echo "De momento este menú solo está"
+    echo "optimizado para usuarios VMess"
+    echo "====================================================="
+    echo " [1] > CREAR USUARIO VMess"
+    echo " [2] > ELIMINAR USUARIO VMess"
+    echo " [3] > VER USUARIOS VMess"
+    echo "-----------------------------------------------------"
+    echo " [0] > SALIR"
+    echo "====================================================="
+    read -p "Seleccione una Opción: " option
 
-echo "V2Ray instalado y configurado."
+    case $option in
+        1)
+            create_user
+            ;;
+        2)
+            delete_user
+            ;;
+        3)
+            view_users
+            ;;
+        0)
+            echo "Saliendo del menú. ¡Adiós!"
+            exit
+            ;;
+        *)
+            echo "Opción no válida. Intente de nuevo."
+            ;;
+    esac
+
+    read -p "Presione Enter para continuar..."
+done
