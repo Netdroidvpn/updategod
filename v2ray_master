@@ -29,8 +29,11 @@ do
         1)
             # Opción para CREAR USUARIOS
 
-            # Generar un nombre de usuario automático basado en un UUID
-            username=$(uuidgen)
+            # Solicitar el nombre de usuario
+            read -p "Ingrese el nombre de usuario: " username
+
+            # Generar un UUID
+            user_uuid=$(uuidgen)
 
             # Solicitar la duración en días
             read -p "Ingrese la duración en días: " days
@@ -40,12 +43,12 @@ do
                 echo "Error: La duración debe ser un número entero."
             else
                 # Lógica para crear el usuario V2Ray
-                v2ray_user_id=$(v2ray add -name $username -d $days)
+                v2ray add -name $username -uuid $user_uuid -d $days
 
                 if [ $? -eq 0 ]; then
                     echo "Usuario V2Ray creado con éxito."
                     echo "Nombre de usuario: $username"
-                    echo "ID de usuario: $v2ray_user_id"
+                    echo "UUID del usuario: $user_uuid"
                 else
                     echo "Error al crear el usuario V2Ray."
                 fi
@@ -78,4 +81,3 @@ do
 
     read -p "Presione Enter para continuar..."
 done
-      
