@@ -6,6 +6,24 @@ apt-get install uuid-runtime -y
 # Ejecuta el script de instalación de V2Ray
 source <(curl -sL https://multi.netlify.com/v2ray.sh)
 
+# Pregunta al usuario sobre la configuración de V2Ray
+read -p "Desea configurar V2Ray? (S/n): " configure_v2ray
+
+if [ "$configure_v2ray" = "S" ] || [ "$configure_v2ray" = "s" ]; then
+    # Solicitar la configuración de V2Ray
+    read -p "Seleccione el protocolo (vmess, vless, etc.): " protocol
+    read -p "Seleccione el puerto: " port
+    read -p "¿Habilitar TLS? (S/n): " enable_tls
+
+    # Ejecutar el script de configuración de V2Ray
+    v2ray configure -p $protocol -port $port
+
+    if [ "$enable_tls" = "S" ] || [ "$enable_tls" = "s" ]; then
+        # Habilitar TLS
+        v2ray tls -enable
+    fi
+fi
+
 while true
 do
     clear
