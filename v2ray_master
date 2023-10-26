@@ -1,101 +1,52 @@
 #!/bin/bash
 
-# Instala las dependencias
-apt-get install uuid-runtime -y
+# Instalación de V2Ray
+bash <(curl -L -s https://install.direct/go.sh)
 
-# Ejecuta el script de instalación de V2Ray
-source <(curl -sL https://multi.netlify.com/v2ray.sh)
+# Configuración de V2Ray
+echo "Configuración de V2Ray"
+echo "Seleccione el protocolo (vmess, vless, etc.): "
+read protocol
+echo "Seleccione el puerto: "
+read port
+echo "¿Habilitar TLS? (S/n): "
+read enable_tls
 
-# Pregunta al usuario sobre la configuración de V2Ray
-read -p "Desea configurar V2Ray? (S/n): " configure_v2ray
+# Configurar V2Ray con los parámetros especificados
+cat > /etc/v2ray/config.json <<EOF
+{
+  "inbounds": [
+    {
+      "port": $port,
+      "protocol": "$protocol",
+      "settings": {
+        "clients": [
+          {
+            "id": "your_user_id",
+            "alterId": 64
+          }
+        ]
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "protocol": "freedom",
+      "settings": {}
+    }
+  ]
+}
+EOF
 
-if [ "$configure_v2ray" = "S" ] || [ "$configure_v2ray" = "s" ]; then
-    # Solicitar la configuración de V2Ray
-    read -p "Seleccione el protocolo (vmess, vless, etc.): " protocol
-    read -p "Seleccione el puerto: " port
-    read -p "¿Habilitar TLS? (S/n): " enable_tls
-
-    # Ejecutar el script de configuración de V2Ray
-    v2ray configure -p $protocol -port $port
-
-    if [ "$enable_tls" = "S" ] || [ "$enable_tls" = "s" ]; then
-        # Habilitar TLS
-        v2ray tls -enable
-    fi
+if [ "$enable_tls" = "S" ] || [ "$enable_tls" = "s" ]; then
+  echo "Habilitando TLS"
+  sed -i 's#"tls": false#"tls": true#' /etc/v2ray/config.json
 fi
 
-while true
-do
-    clear
-    echo "GESTION DE USUARIOS V2RAY"
-    echo "====================================================="
-    echo "De momento este menú solo está"
-    echo "optimizado para usuarios VMESS"
-    echo "====================================================="
-    echo " [1] > CREAR USUARIOS"
-    echo " [2] > ELIMINAR USUARIOS"
-    echo " [3] > RENOVAR USUARIO"
-    echo "-----------------------------------------------------"
-    echo " [4] > VMESS DE USUARIOS"
-    echo " [5] > RESPALDO DE SEGURIDAD"
-    echo "====================================================="
-    echo " [0] > VOLVER"
-    echo "====================================================="
-    read -p "Seleccione una Opción: " option
+# Reiniciar V2Ray
+systemctl restart v2ray
 
-    case $option in
-        1)
-            # Opción para CREAR USUARIOS
+# Lógica para gestionar usuarios
+# Agrega tu lógica aquí para crear, eliminar o gestionar usuarios V2Ray según tus necesidades
 
-            # Solicitar el nombre de usuario
-            read -p "Ingrese el nombre de usuario: " username
-
-            # Generar un UUID
-            user_uuid=$(uuidgen)
-
-            # Solicitar la duración en días
-            read -p "Ingrese la duración en días: " days
-
-            # Verificar si se ingresó un valor numérico
-            if ! [[ $days =~ ^[0-9]+$ ]]; then
-                echo "Error: La duración debe ser un número entero."
-            else
-                # Lógica para crear el usuario V2Ray
-                v2ray add -name $username -uuid $user_uuid -d $days
-
-                if [ $? -eq 0 ]; then
-                    echo "Usuario V2Ray creado con éxito."
-                    echo "Nombre de usuario: $username"
-                    echo "UUID del usuario: $user_uuid"
-                else
-                    echo "Error al crear el usuario V2Ray."
-                fi
-            fi
-            ;;
-        2)
-            # Coloca aquí el código para eliminar usuarios V2Ray
-            echo "Opción 2 seleccionada: ELIMINAR USUARIOS"
-            ;;
-        3)
-            # Coloca aquí el código para renovar usuarios V2Ray
-            echo "Opción 3 seleccionada: RENOVAR USUARIO"
-            ;;
-        4)
-            # Coloca aquí el código para ver usuarios VMESS
-            echo "Opción 4 seleccionada: VMESS DE USUARIOS"
-            ;;
-        5)
-            # Coloca aquí el código para realizar respaldo de seguridad
-            echo "Opción 5 seleccionada: RESPALDO DE SEGURIDAD"
-            ;;
-        0)
-            echo "Saliendo del menú. ¡Adiós!"
-            exit
-            ;;
-        *)
-            echo "Opción no válida. Intente de nuevo."
-            ;;
-    esac
-
-    read -p "Presione Enter para continuar..."
-done
+echo "V2Ray instalado y configurado."
